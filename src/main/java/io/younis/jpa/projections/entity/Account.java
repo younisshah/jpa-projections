@@ -23,9 +23,11 @@ public class Account extends BaseEntity {
     private String accountNumber;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Builder.Default
     private Set<CreditCard> cards = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Builder.Default
     private Set<Address> addresses = new HashSet<>();
 
 }

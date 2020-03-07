@@ -23,7 +23,7 @@ public class CreditCard {
     @Enumerated(EnumType.STRING)
     private CreditCardType creditCardType;
 
-    enum CreditCardType {
+    public enum CreditCardType {
         VISA,
         AMEX,
         DISCOVER,

@@ -24,6 +24,6 @@ public class Customer extends BaseEntity {
 
     private String email;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Account account;
 }
