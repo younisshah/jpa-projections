@@ -1,13 +1,16 @@
 package io.younis.jpa.projections.respository;
 
-import io.vavr.control.Option;
 import io.younis.jpa.projections.entity.Customer;
+import io.younis.jpa.projections.entity.NameOnly;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CustomerRepository extends PagingAndSortingRepository<Customer, Long> {
 
-    Option<Customer> findByEmailContaining(String email);
+    @Query(value = "SELECT first_name as firstName, last_name as lastName FROM customer WHERE email=:email", nativeQuery = true)
+    NameOnly findCustomerNameByEmail(@Param("email") String email);
 
 }
