@@ -73,6 +73,10 @@ class JpaProjectionsApplicationTests {
         var lastName = nameOnly.getLastName();
         Assertions.assertEquals("tQNCUyqAuw", firstName);
         Assertions.assertEquals("VWXidPNEGb", lastName);
+
+        var nameEmail = customerRepository.findNameEmailById(customer.getId());
+        Assertions.assertEquals("tQNCUyqAuw", nameEmail.getFirstName());
+        Assertions.assertEquals("wkxqKPkG@mail.com", nameEmail.getEmail());
     }
 
 }
