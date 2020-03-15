@@ -4,11 +4,13 @@ import io.younis.jpa.projections.entity.Customer;
 import io.younis.jpa.projections.entity.NameEmail;
 import io.younis.jpa.projections.entity.NameOnly;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import javax.persistence.QueryHint;
+import java.util.List;
 
 @Repository
 public interface CustomerRepository extends PagingAndSortingRepository<Customer, Long> {
@@ -22,5 +24,5 @@ public interface CustomerRepository extends PagingAndSortingRepository<Customer,
     @QueryHints(value = {
         @QueryHint(name = "org.hibernate.fetchSize", value = "20")
     })
-    List<Cutomer> findByFirstNameContaining(String firstName);
+    List<Customer> findByFirstNameContaining(String firstName);
 }
