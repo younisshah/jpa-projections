@@ -1,29 +1,32 @@
 package io.younis.jpa.projections;
 
-import io.younis.jpa.projections.entity.Account;
-import io.younis.jpa.projections.entity.Address;
-import io.younis.jpa.projections.entity.CreditCard;
-import io.younis.jpa.projections.entity.Customer;
+import io.younis.jpa.projections.entity.*;
 import io.younis.jpa.projections.entity.join.Event;
 import io.younis.jpa.projections.entity.join.EventType;
 import io.younis.jpa.projections.entity.join.NotificationTemplate;
-import io.younis.jpa.projections.respository.CustomerRepository;
-import io.younis.jpa.projections.respository.EventRepository;
-import io.younis.jpa.projections.respository.EventTypeRepository;
-import io.younis.jpa.projections.respository.NotificationTemplateRepository;
+import io.younis.jpa.projections.entity.specification.UserSpecifications;
+import io.younis.jpa.projections.respository.*;
 import junit.framework.AssertionFailedError;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = JpaProjectionsApplication.class)
@@ -35,18 +38,21 @@ class JpaProjectionsApplicationTests {
     private NotificationTemplateRepository notificationTemplateRepository;
     private EventRepository eventRepository;
     private EventTypeRepository eventTypeRepository;
+    private UserRepository userRepository;
 
     @Autowired
     public JpaProjectionsApplicationTests(
             CustomerRepository customerRepository,
             NotificationTemplateRepository notificationTemplateRepository,
             EventRepository eventRepository,
-            EventTypeRepository eventTypeRepository
+            EventTypeRepository eventTypeRepository,
+            UserRepository userRepository
     ) {
         this.customerRepository = customerRepository;
         this.notificationTemplateRepository = notificationTemplateRepository;
         this.eventRepository = eventRepository;
         this.eventTypeRepository = eventTypeRepository;
+        this.userRepository = userRepository;
     }
 
     @DisplayName("Test customer")
@@ -134,4 +140,54 @@ class JpaProjectionsApplicationTests {
         Assertions.assertEquals("Some title in English", smsTemplateView.getEnTitle());
     }
 
+    @Test
+    public void exampleTest() {
+
+        userRepository.saveAll(Arrays.asList(
+                new User("John", "Doe", "john@doe.com"),
+                new User("Jane", "Doe", "jane@doe.com")));
+
+        String firstName = null;
+        String lastName = "dOe";
+
+        var matcher = ExampleMatcher
+                .matchingAll()
+                //.withIgnoreCase("lastName") // OR
+                .withMatcher("lastName", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase());
+
+        var exampleUser = User.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .build();
+
+        List<User> allUsers = userRepository.findAll(Example.of(exampleUser, matcher));
+        Assertions.assertEquals(2, allUsers.size());
+    }
+
+    @ParameterizedTest
+    @MethodSource("args")
+    public void specificationTest(String firstName, String lastName) {
+
+        userRepository.saveAll(Arrays.asList(
+                new User("John", "Doe", "john@doe.com"),
+                new User("Jane", "Doe", "jane@doe.com"),
+                new User("Job", "Rogers", "bob@r.com"),
+                new User("Mark", "Down", "down@txt.com")
+        ));
+
+        Specification<User> spec = Specification.where(firstName == null ? null : UserSpecifications.firstNameContains(firstName))
+                .and(lastName == null ? null : UserSpecifications.lastNameContains(lastName));
+
+        List<User> all = userRepository.findAll(spec);
+        Assertions.assertEquals(2, all.size());
+
+       all = userRepository.findAll(Specification.where(UserSpecifications.lastNameIn("Doe", "Down")));
+    }
+
+    private static Stream<Arguments> args() {
+        return Stream.of(
+                Arguments.of(null, "Doe"),
+                Arguments.of("Jane", null)
+        );
+    }
 }
