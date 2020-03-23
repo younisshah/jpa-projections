@@ -5,6 +5,7 @@ import io.younis.jpa.projections.entity.join.Event;
 import io.younis.jpa.projections.entity.join.EventType;
 import io.younis.jpa.projections.entity.join.NotificationTemplate;
 import io.younis.jpa.projections.entity.specification.UserSpecifications;
+import io.younis.jpa.projections.model.CarSearchCommand;
 import io.younis.jpa.projections.respository.*;
 import junit.framework.AssertionFailedError;
 import org.junit.jupiter.api.Assertions;
@@ -15,6 +16,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Example;
@@ -39,6 +41,8 @@ class JpaProjectionsApplicationTests {
     private EventRepository eventRepository;
     private EventTypeRepository eventTypeRepository;
     private UserRepository userRepository;
+    private CarColorRepository carColorRepository;
+    private CarRepository carRepository;
 
     @Autowired
     public JpaProjectionsApplicationTests(
@@ -46,13 +50,17 @@ class JpaProjectionsApplicationTests {
             NotificationTemplateRepository notificationTemplateRepository,
             EventRepository eventRepository,
             EventTypeRepository eventTypeRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            CarRepository carRepository,
+            CarColorRepository carColorRepository
     ) {
         this.customerRepository = customerRepository;
         this.notificationTemplateRepository = notificationTemplateRepository;
         this.eventRepository = eventRepository;
         this.eventTypeRepository = eventTypeRepository;
         this.userRepository = userRepository;
+        this.carColorRepository = carColorRepository;
+        this.carRepository = carRepository;
     }
 
     @DisplayName("Test customer")
@@ -181,7 +189,50 @@ class JpaProjectionsApplicationTests {
         List<User> all = userRepository.findAll(spec);
         Assertions.assertEquals(2, all.size());
 
-       all = userRepository.findAll(Specification.where(UserSpecifications.lastNameIn("Doe", "Down")));
+        all = userRepository.findAll(Specification.where(UserSpecifications.lastNameIn("Doe", "Down")));
+    }
+
+    @Test
+    public void testCriteriaQuery() {
+        List<CarColor> carColors = carColorRepository.saveAll(Arrays.asList(
+                new CarColor("Red", "RD001"),
+                new CarColor("Black", "BK001")
+        ));
+
+        var redMazda = Car.builder()
+                .name("Mazda 6")
+                .desc("Mazda is a very fast car")
+                .manufacturer("Mazda")
+                .year("2011")
+                .colorCodeId(carColors.get(0).getId())
+                .build();
+
+        var blackMazda = Car.builder()
+                .name("Mazda 6")
+                .desc("Mazda is a very fast car")
+                .manufacturer("Mazda")
+                .year("2011")
+                .colorCodeId(carColors.get(1).getId())
+                .build();
+
+        var bmw = Car.builder()
+                .name("BMW i3")
+                .desc("BMW is a very nice car")
+                .manufacturer("BMW")
+                .year("2013")
+                .colorCodeId(carColors.get(1).getId())
+                .build();
+
+        carRepository.save(redMazda);
+        carRepository.save(blackMazda);
+        carRepository.save(bmw);
+
+        var carSearch = CarSearchCommand.builder()
+                .carName("Mazda 6")
+                .build();
+
+        List<CarSearch> byCarSearchCommand = carRepository.findByCarSearchCommand(carSearch);
+        Assertions.assertEquals(2, byCarSearchCommand.size());
     }
 
     private static Stream<Arguments> args() {
