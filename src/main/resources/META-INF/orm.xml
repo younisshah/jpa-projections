@@ -1,0 +1,14 @@
+<entity-mappings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.1"
+                 xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm"
+                 xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm
+    http://xmlns.jcp.org/xml/ns/persistence/orm_2_1.xsd">
+    <sql-result-set-mapping name="CarSearchXml">
+        <constructor-result target-class="io.younis.jpa.projections.entity.CarSearch">
+            <column name="carName" class="java.lang.String"/>
+            <column name="colorCode" class="java.lang.String"/>
+            <column name="color" class="java.lang.String"/>
+            <column name="desc" class="java.lang.String"/>
+            <column name="year" class="java.lang.String"/>
+        </constructor-result>
+    </sql-result-set-mapping>
+</entity-mappings>
