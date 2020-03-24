@@ -16,7 +16,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runner.RunWith;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Example;
@@ -220,7 +219,7 @@ class JpaProjectionsApplicationTests {
                 .desc("BMW is a very nice car")
                 .manufacturer("BMW")
                 .year("2013")
-                .colorCodeId(carColors.get(1).getId())
+                .colorCodeId(carColors.get(0).getId())
                 .build();
 
         carRepository.save(redMazda);
@@ -233,6 +232,21 @@ class JpaProjectionsApplicationTests {
 
         List<CarSearch> byCarSearchCommand = carRepository.findByCarSearchCommand(carSearch);
         Assertions.assertEquals(2, byCarSearchCommand.size());
+
+        List<CarSearch> carSearches = carRepository.findByColorCode("RD001");
+        Assertions.assertEquals(2, carSearches.size());
+
+        List<CarSearch> rawCarSearches = carRepository.findByColorCodeRaw("RD001");
+        Assertions.assertEquals(2, rawCarSearches.size());
+
+        List<CarSearch> byColorCodeConstructorMapping = carRepository.findByColorCodeConstructorMapping("RD001");
+        Assertions.assertEquals(2, byColorCodeConstructorMapping.size());
+
+        List<CarSearch> byColorCodeConstructorMappingXml = carRepository.findByColorCodeConstructorMappingXml("RD001");
+        Assertions.assertEquals(2, byColorCodeConstructorMappingXml.size());
+
+        List<CarSearch> byColorCodeConvenienceMap = carRepository.findByColorCodeConvenienceMap("RD001");
+        Assertions.assertEquals(2, byColorCodeConvenienceMap.size());
     }
 
     private static Stream<Arguments> args() {
