@@ -16,9 +16,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Repository
@@ -200,17 +198,62 @@ public class CarSearchRepositoryImpl implements CarSearchRepository {
     }
 
     @Override
-    public List<CarSearch> findByColorCodeConvenienceMap(String colorCode) {
-        Query query = em.createNativeQuery("select" +
-                " c.NAME as \"carName\"," + // double quoting the alias is mandatory
-                " cc.COLOR_CODE as \"colorCode\"," + // double quoting the alias is mandatory
-                " cc.COLOR as \"color\"," + // double quoting the alias is mandatory
-                " c.DESCRIPTION as \"desc\"," + // double quoting the alias is mandatory
-                " c.MANUFACTURE_YEAR as \"year\"" + // double quoting the alias is mandatory
-                " from CAR c" +
-                " INNER JOIN CAR_COLOR CC on c.COLOR_CODE_ID = CC.ID" +
-                " WHERE CC.COLOR_CODE=:colorCode")
-                .setParameter("colorCode", colorCode);
+    public List<CarSearch> findByColorCodeConvenienceMap(CarSearchCommand carSearchCommand) {
+
+        // static sql query
+        String sql = "select" +
+                " c.NAME," +
+                " cc.COLOR_CODE," +
+                " cc.COLOR," +
+                " c.DESCRIPTION," +
+                " c.MANUFACTURE_YEAR" +
+                " from CAR as c" +
+                " INNER JOIN CAR_COLOR CC on c.COLOR_CODE_ID = CC.ID";
+
+        // queryParams represents the where clause key=value pairs
+        Map<String, Object> queryParams = new LinkedHashMap<>(); // order matters here. hence LinkedHashMap
+        if (!StringUtils.isEmpty(carSearchCommand.getCarName())) {
+            queryParams.put("C.name", carSearchCommand.getCarName()); // WHERE C.name = "VALUE"
+        }
+        if (!StringUtils.isEmpty(carSearchCommand.getColorCode())) {
+            queryParams.put("CC.COLOR_CODE", carSearchCommand.getColorCode()); // WHERE CC.COLOR_CODE = "VALUE"
+        }
+        if (!StringUtils.isEmpty(carSearchCommand.getYear())) {
+            queryParams.put("C.manufacture_year", carSearchCommand.getYear()); // WHERE C.MANUFACTURE_YEAR = "VALUE"
+        }
+        if (!StringUtils.isEmpty(carSearchCommand.getDesc())) {
+            queryParams.put("C.description", carSearchCommand.getDesc()); // WHERE C.DESCRIPTION = "VALUE"
+        }
+
+        // initialize the StringBuilder which the length of static query
+        // reduces the amortized space complexity
+        StringBuilder queryBuilder = new StringBuilder(sql.length());
+        queryBuilder.append(sql);
+
+        // tracks if we need to add "AND" or "WHERE"
+        boolean whereClauseStarted = false;
+        for (String key : queryParams.keySet()) {
+            if (!whereClauseStarted) {
+                queryBuilder.append(" WHERE ");
+                whereClauseStarted = true;
+            } else {
+                queryBuilder.append(" AND ");
+            }
+            queryBuilder.append(key);
+            queryBuilder.append(" = ?"); // the placeholder
+        }
+
+        String finalSql = queryBuilder.toString();
+        final Query query = em.createNativeQuery(finalSql);
+
+        // tracks the positional placeholder
+        int index = 1;
+        // always travers entrySet() and NOT keySet().
+        // much more efficient
+        for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
+            query.setParameter(index, entry.getValue());
+            index ++;
+        }
         return getResultList(query, CarSearch.class);
     }
 }

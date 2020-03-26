@@ -16,5 +16,5 @@ public interface CarSearchRepository {
 
     List<CarSearch> findByColorCodeConstructorMappingXml(String colorCode);
 
-    List<CarSearch> findByColorCodeConvenienceMap(String colorCode);
+    List<CarSearch> findByColorCodeConvenienceMap(CarSearchCommand carSearchCommand);
 }
