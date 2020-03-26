@@ -10,8 +10,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class CarSearchCommand {
-    private String carName; // Table: car
-    private String colorCode; // Table: car
-    private String year; // Table: car
-    private String desc; // Table: car
+    private String carName;
+    private String colorCode;
+    private String year;
+    private String desc;
+    private Integer pageSize;
+    private Integer pageNumber;
+    private String sortBy;
+    private String sortType;
 }

@@ -5,7 +5,7 @@ import io.younis.jpa.projections.entity.join.Event;
 import io.younis.jpa.projections.entity.join.EventType;
 import io.younis.jpa.projections.entity.join.NotificationTemplate;
 import io.younis.jpa.projections.entity.specification.UserSpecifications;
-import io.younis.jpa.projections.model.CarSearchCommand;
+import io.younis.jpa.projections.model.CarSearchCriteria;
 import io.younis.jpa.projections.respository.*;
 import junit.framework.AssertionFailedError;
 import org.junit.jupiter.api.Assertions;
@@ -23,9 +23,12 @@ import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -226,27 +229,82 @@ class JpaProjectionsApplicationTests {
         carRepository.save(blackMazda);
         carRepository.save(bmw);
 
-        var carSearch = CarSearchCommand.builder()
+        var carSearch = CarSearchCriteria.builder()
                 .carName("Mazda 6")
                 .build();
 
-        List<CarSearch> byCarSearchCommand = carRepository.findByCarSearchCommand(carSearch);
-        Assertions.assertEquals(2, byCarSearchCommand.size());
+        List<CarRow> byCarRowCommand = carRepository.findByCarSearchCommand(carSearch);
+        Assertions.assertEquals(2, byCarRowCommand.size());
 
-        List<CarSearch> carSearches = carRepository.findByColorCode("RD001");
-        Assertions.assertEquals(2, carSearches.size());
+        List<CarRow> carRows = carRepository.findByColorCode("RD001");
+        Assertions.assertEquals(2, carRows.size());
 
-        List<CarSearch> rawCarSearches = carRepository.findByColorCodeRaw("RD001");
-        Assertions.assertEquals(2, rawCarSearches.size());
+        List<CarRow> rawCarRows = carRepository.findByColorCodeRaw("RD001");
+        Assertions.assertEquals(2, rawCarRows.size());
 
-        List<CarSearch> byColorCodeConstructorMapping = carRepository.findByColorCodeConstructorMapping("RD001");
+        List<CarRow> byColorCodeConstructorMapping = carRepository.findByColorCodeConstructorMapping("RD001");
         Assertions.assertEquals(2, byColorCodeConstructorMapping.size());
 
-        List<CarSearch> byColorCodeConstructorMappingXml = carRepository.findByColorCodeConstructorMappingXml("RD001");
+        List<CarRow> byColorCodeConstructorMappingXml = carRepository.findByColorCodeConstructorMappingXml("RD001");
         Assertions.assertEquals(2, byColorCodeConstructorMappingXml.size());
 
-        List<CarSearch> byColorCodeConvenienceMap = carRepository.findByColorCodeConvenienceMap("RD001");
-        Assertions.assertEquals(2, byColorCodeConvenienceMap.size());
+        var csc = CarSearchCriteria.builder()
+                .colorCode("RD001")
+                .pageNumber(0)
+                .pageSize(10)
+                .build();
+        List<CarRow> byColorCodeConvenienceMap = carRepository.findByColorCodeConvenienceMap(csc);
+        Assertions.assertEquals(0, byColorCodeConvenienceMap.size());
+    }
+
+    @Test
+    public void str() {
+
+        var carSearchCommand = CarSearchCriteria.builder()
+                .carName("Mazda")
+                .build();
+
+        Map<String, Object> params = new HashMap<>();
+        if (!StringUtils.isEmpty(carSearchCommand.getCarName())) {
+            params.put("carName", carSearchCommand.getCarName());
+        }
+        if (!StringUtils.isEmpty(carSearchCommand.getColorCode())) {
+            params.put("colorCode", carSearchCommand.getColorCode());
+        }
+        if (!StringUtils.isEmpty(carSearchCommand.getYear())) {
+            params.put("manufacture_year", carSearchCommand.getYear());
+        }
+        if (!StringUtils.isEmpty(carSearchCommand.getDesc())) {
+            params.put("description", carSearchCommand.getDesc());
+        }
+
+        String sql = "select" +
+                " c.NAME," +
+                " cc.COLOR_CODE," +
+                " cc.COLOR," +
+                " c.DESCRIPTION," +
+                " c.MANUFACTURE_YEAR" +
+                " from CAR as c" +
+                " INNER JOIN CAR_COLOR CC on c.COLOR_CODE_ID = CC.ID";
+
+        StringBuilder queryBuilder = new StringBuilder(sql.length());
+        queryBuilder.append(sql);
+        boolean queryBuildStarted = false;
+
+        for (String key : params.keySet()) {
+            if (!queryBuildStarted) {
+                queryBuilder.append(" WHERE ");
+                queryBuildStarted = true;
+            } else {
+                queryBuilder.append(" AND ");
+            }
+            queryBuilder.append(key);
+            queryBuilder.append(" = :");
+            queryBuilder.append(key);
+        }
+
+        String finalSql = queryBuilder.toString();
+        System.out.println(finalSql);
     }
 
     private static Stream<Arguments> args() {
